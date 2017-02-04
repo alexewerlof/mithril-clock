@@ -1,0 +1,31 @@
+<body style="margin:0;padding:0">
+  <div id="app"></div>
+    <script src="http://unpkg.com/mithril/mithril.js"></script>
+    <script>
+    var root = document.querySelector('#app');
+    var count = 10
+    const circle = {
+      view: function (vnode) {
+        return m('circle', {cx:vnode.attrs.cx, cy:"50", r:"40", stroke:"green", 'stroke-width':"4", fill:"yellow"})
+      }
+    }
+    const svg = {
+      view: function(vnode) {
+        console.dir(vnode);
+        return m('svg', vnode.attrs, vnode.children)
+      }
+    }
+    var Hello = {
+        view: function() {
+            return m("main", [
+                m(svg, {width: document.body.clientWidth, height: document.body.clientHeight}, [
+                  m(circle, {cx: count}),
+                  m(circle, {cx: count * 2})
+                ]),
+                m("button", {onclick: function() {count++}}, count + " clicks")
+            ])
+        }
+    }
+    m.mount(root, Hello)
+    </script>
+</body>

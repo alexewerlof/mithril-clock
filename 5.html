@@ -1,0 +1,90 @@
+<body style="margin:0;padding:0">
+  <div id="app"></div>
+    <script src="http://unpkg.com/mithril/mithril.js"></script>
+    <script>
+    const toRadians = angle => angle * Math.PI / 180;
+    const toDegrees = angle => angle * 180 / Math.PI;
+    function computeXY(cx, cy, r, rotation) {
+      return {
+        x: cx + Math.sin(toRadians(rotation)) * r,
+        y: cy - Math.cos(toRadians(rotation)) * r
+      };
+    }
+    const hour2deg = h => h * 30;
+    const min2deg = min => min * 6;
+    const sec2deg = min2deg;
+    const color = {
+      face: '#eee',
+      hour: 'black',
+      minute: 'black',
+      second: 'red',
+      indicator: 'black',
+    }
+    var root = document.querySelector('#app');
+    var hour = 0;
+    var minute = 0;
+    var second = 0;
+    function updateTime() {
+      const d = new Date;
+      second = d.getSeconds() + d.getMilliseconds() / 1000;
+      minute = d.getMinutes() + second / 60;
+      hour = d.getHours() + minute / 60;
+      m.redraw();
+    }
+    const indicator = {
+      view: function (vnode) {
+        const { cx, cy, rotation, r, stroke, width, length } = vnode.attrs;
+        const start = computeXY(cx, cy, r - length, rotation);
+        const end = computeXY(cx, cy, r, rotation)
+        return m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke, 'stroke-width': width} })
+      }
+    }
+    const face = {
+      view: function (vnode) {
+        const {cx, cy, r, fill, stroke } = vnode.attrs;
+        const children = [m('circle', {cx, cy, r, fill})];
+        for(let i = 0; i < 60; i++) {
+          if (i % 5 === 0) {
+            children.push(m(indicator, {cx, cy, r, length: r / 6, stroke: color.indicator, width: r / 20, rotation: min2deg(i)}));
+          } else {
+            children.push(m(indicator, {cx, cy, r, length: r / 13, stroke: color.indicator, width: r / 40, rotation: min2deg(i)}));
+          }
+        }
+        return m('g', children);
+      }
+    }
+    const hand = {
+      view: function (vnode) {
+        const { cx, cy, rotation, r, stroke, tail, width } = vnode.attrs;
+        const start = computeXY(cx, cy, -tail, rotation);
+        const end = computeXY(cx, cy, r, rotation);
+        return m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke, 'stroke-width': width} })
+      }
+    }
+    const center = {
+      view: function (vnode) {
+        const {cx, cy, r, fill } = vnode.attrs;
+        return m('circle', {cx, cy, r, fill})
+      }
+    }
+    const clock = {
+        oninit: updateTime,
+        view: function() {
+          const width = document.body.clientWidth;
+          const height = document.body.clientHeight;
+          const cx = width / 2;
+          const cy = height / 2;
+          const r = Math.min(width, height) / 2;
+          return m('svg', { width, height }, [
+            m(face, {cx, cy, r, stroke: color.indicator, fill: color.face}),
+            m(hand, {cx, cy, r: r * 0.7, tail: r / 5, stroke: color.hour, width: r / 12, rotation: hour2deg(hour)}),
+            m(hand, {cx, cy, r: r * 0.9, tail: r / 5, stroke: color.minute, width: r / 18, rotation: min2deg(minute)}),
+            m(hand, {cx, cy, r, tail: r / 5, stroke: color.second, width: r / 30, rotation: sec2deg(second)}),
+            m(center, {cx, cy, r: r / 20, fill: color.second})
+          ]);
+        }
+    }
+    setInterval(updateTime, 16.5);
+    m.mount(root, clock)
+    </script>
+</body>

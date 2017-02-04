@@ -1,0 +1,52 @@
+<body style="margin:0;padding:0">
+  <div id="app"></div>
+    <script src="http://unpkg.com/mithril/mithril.js"></script>
+    <script>
+    const toRadians = angle => angle * Math.PI / 180;
+    const toDegrees = angle => angle * 180 / Math.PI;
+    const min2deg = min => min * 6;
+    const hour2deg = h => h * 30;
+    const color1 = 'orange';
+    const color2 = 'white';
+    var root = document.querySelector('#app');
+    var hour = 0
+    var minute = 0
+    var sec = 0
+    const face = {
+      view: function (vnode) {
+        return m('circle', vnode.attrs)
+      }
+    }
+    const hand = {
+      view: function (vnode) {
+        const { cx, cy, rotation, r, stroke, width } = vnode.attrs;
+        const x2 = cx + Math.sin(toRadians(rotation)) * r;
+        const y2 = cy - Math.cos(toRadians(rotation)) * r;
+        return m('line', { x1: cx, y1: cy, x2, y2, style: {stroke, 'stroke-width': width} })
+      }
+    }
+    const clock = {
+        view: function() {
+          const width = document.body.clientWidth;
+          const height = document.body.clientHeight;
+          const cx = width / 2;
+          const cy = height / 2;
+          const r = Math.min(width, height) / 2;
+          return m('svg', { width, height }, [
+            m(face, {cx, cy, r, fill: color1}),
+            m(hand, {cx, cy, r: r * 0.6, stroke: color2, width: r / 15, rotation: hour2deg(hour)}),
+            m(hand, {cx, cy, r, stroke: color2, width: r / 20, rotation: min2deg(minute)}),
+            m(hand, {cx, cy, r, stroke: color2, width: r / 30, rotation: min2deg(sec)}),
+          ])
+        }
+    }
+    setInterval(() => {
+      const d = new Date;
+      hour = d.getHours()
+      minute = d.getMinutes()
+      sec = d.getSeconds() + d.getMilliseconds() / 1000;
+      m.redraw();
+    }, 1000 / 60);
+    m.mount(root, clock)
+    </script>
+</body>

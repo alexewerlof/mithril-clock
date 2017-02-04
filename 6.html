@@ -1,0 +1,111 @@
+<body style="margin:0;padding:0">
+  <div id="app"></div>
+    <script src="http://unpkg.com/mithril/mithril.js"></script>
+    <script>
+    const toRadians = angle => angle * Math.PI / 180;
+    const toDegrees = angle => angle * 180 / Math.PI;
+    function computeXY(cx, cy, r, rotation) {
+      return {
+        x: cx + Math.sin(toRadians(rotation)) * r,
+        y: cy - Math.cos(toRadians(rotation)) * r
+      };
+    }
+    const hour2deg = h => h * 30;
+    const min2deg = min => min * 6;
+    const sec2deg = min2deg;
+    const color = {
+      face: '#eee',
+      hour: 'black',
+      minute: 'black',
+      second: 'rgb(205, 16, 36)',
+      indicator: 'black',
+    }
+    var root = document.querySelector('#app');
+    var hour = 0;
+    var minute = 0;
+    var second = 0;
+    function updateTime() {
+      const d = new Date;
+      second = d.getSeconds() + d.getMilliseconds() / 1000;
+      minute = d.getMinutes() + second / 60;
+      hour = d.getHours() + minute / 60;
+      m.redraw();
+    }
+    const indicator = {
+      view: function (vnode) {
+        const { cx, cy, rotation, r, stroke, width, length } = vnode.attrs;
+        const start = computeXY(cx, cy, r - length, rotation);
+        const end = computeXY(cx, cy, r * 0.95, rotation)
+        return m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke, 'stroke-width': width} })
+      }
+    }
+    const face = {
+      view: function (vnode) {
+        const {cx, cy, r } = vnode.attrs;
+        const children = [m('circle', {cx, cy, r, fill: color.face})];
+        for(let i = 0; i < 60; i++) {
+          if (i % 5 === 0) {
+            children.push(m(indicator, {cx, cy, r, length: r / 4.5, stroke: color.indicator, width: r / 18, rotation: min2deg(i)}));
+          } else {
+            children.push(m(indicator, {cx, cy, r, length: r / 10, stroke: color.indicator, width: r / 40, rotation: min2deg(i)}));
+          }
+        }
+        return m('g', children);
+      }
+    }
+    const hourHand = {
+      view: function (vnode) {
+        const { cx, cy, r } = vnode.attrs;
+        const rotation = hour2deg(hour);
+        const start = computeXY(cx, cy, -r / 5, rotation);
+        const end = computeXY(cx, cy, r * 0.7, rotation);
+        return m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke: color.hour, 'stroke-width': r / 10} })
+      }
+    }
+    const minuteHand = {
+      view: function (vnode) {
+        const { cx, cy, r } = vnode.attrs;
+        const rotation = min2deg(minute);
+        const start = computeXY(cx, cy, -r / 5, rotation);
+        const end = computeXY(cx, cy, r * 0.9, rotation);
+        return m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke: color.minute, 'stroke-width': r / 16} })
+      }
+    }
+    const secondHand = {
+      view: function (vnode) {
+        const { cx, cy, r } = vnode.attrs;
+        const rotation = sec2deg(second);
+        const start = computeXY(cx, cy, -r / 5, rotation);
+        const end = computeXY(cx, cy, r * 0.7, rotation);
+        return m('g', [
+          m('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, style: {stroke: color.second, 'stroke-width': r / 40} }),
+          m('circle', {cx: end.x, cy: end.y, r: r / 15, fill: color.second}),
+          m('circle', {cx, cy, r: r / 20, fill: color.second})
+        ]);
+      }
+    }
+    const clock = {
+        oninit: updateTime,
+        oncreate: () => {
+          this.intervalId = setInterval(updateTime, 16.5);
+        },
+        onremove: () => {
+          clearInterval(this.intervalId);
+        },
+        view: function() {
+          const width = document.body.clientWidth;
+          const height = document.body.clientHeight;
+          const cx = width / 2;
+          const cy = height / 2;
+          const r = Math.min(width, height) / 2;
+          return m('svg', { width, height }, [
+            m(face,       {cx, cy, r}),
+            m(hourHand,   {cx, cy, r}),
+            m(minuteHand, {cx, cy, r}),
+            m(secondHand, {cx, cy, r}),
+          ]);
+        }
+    }
+    m.mount(root, clock);
+    </script>
+</body>
